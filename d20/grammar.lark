@@ -6,7 +6,8 @@ commented_expr: num COMMENT?
 
 // comments are given -1 priority - only match comment if no other possibilities
 // require leading whitespace so dice ops like kh3 aren't tokenized as comments
-COMMENT.-1: /[ \t\n\f\r]+.+/
+// priority 1 so COMMENT is tried before _WS (avoids _WS eating the whitespace first)
+COMMENT.1: /[ \t\n\f\r]+.+/
 
 // math and operators, PMDAS
 ?num: comparison
@@ -31,6 +32,8 @@ ANNOTATION: /\[.*?\]/ _WS?
 literal: INTEGER | DECIMAL
 
 // sets
+// sets — only set_ops (k/p) can follow a parenthetical; dice_ops (ro/rr/e/etc)
+// are allowed on diceexpr only (per Avrae grammar design)
 ?set: setexpr set_op*
 
 set_op: SET_OPERATOR selector

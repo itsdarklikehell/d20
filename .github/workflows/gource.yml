@@ -25,7 +25,7 @@ jobs:
       - name: Gource Action
         uses: nbprojekt/gource-action@v1
         with:
-          gource_title: "{repo_name} development timeline"
+          gource_title: "D20 development timeline"
           gource_resolution: 1080p
           gource_fps: 60
           gource_filename_time: 3

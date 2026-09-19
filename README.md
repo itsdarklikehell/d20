@@ -281,6 +281,56 @@ As a note, even though a `Dice` object is the parent of `Die` objects, `Dice.chi
 more common to look for the dice, and not each individual component of that dice.
 
 ## Performance
+
+(empty)
+
+---
+
+## 🎥 Gource Visualization
+
+De ontwikkelhistorie van dit project in een film:
+
+<video src="https://raw.githubusercontent.com/itsdarklikehell/d20/master/gource.mp4" controls width="100%"></video>
+
+---
+
+## Grammar Fix Notes (COMMENT tokenization)
+
+The d20 grammar (`d20/grammar.lark`) was updated to fix a tokenization issue where
+dice operators like `kh3` in `(4d6)kh3` were incorrectly tokenized as a COMMENT token.
+
+### The fix
+Changed:
+```
+COMMENT.-1: _WS? /.+/
+```
+To:
+```
+COMMENT.1: /[ \t\n\f\r]+.+/
+```
+
+### Why this works
+- **Leading whitespace required**: COMMENT now only matches if preceded by at least one
+  whitespace character. This prevents `kh3` from being captured as a comment after `(4d6)`.
+- **Priority `.1`**: COMMENT is tried before `_WS` (which has default priority 0).
+  Since COMMENT now requires leading whitespace, there's no conflict — `_WS` would eat
+  the whitespace and leave `kh3` for the normal token stream.
+
+### What works now
+- `(4d6)kh3` — set_op on parenthetical (kh3 parsed as keep-highest-3, not comment) ✅
+- `(2d6)kl1` — same ✅
+- `1d20ro>15` — dice_op on diceexpr without whitespace (no comment, works natively) ✅
+- `1d20 ro>15` with `allow_comments=True` — comment parsing ✅
+
+### What does NOT work (by design — not a bug)
+- `(1d20)ro>15` — dice_op on parenthetical without whitespace does not parse.
+  This is an intentional limitation of the Avrae grammar design: dice operators
+  (`ro`, `rr`, `e`, `mi`, `ma`) are allowed on `diceexpr` (e.g., `1d20ro>15`) but
+  not on `setexpr`/parentheticals. To use a dice op with a parenthetical, wrap the
+  dice differently or use the syntax without the parens.
+
+See `d20/diceast.py` for the transformer implementation and `d20/dice.py` for the
+parser wrapper that supports `allow_comments`.
 By default, the parser caches the 256 most frequently used dice expressions in an LFU cache, allowing for a significant 
 speedup when rolling many of the same kinds of rolls. This caching is disabled when `allow_comments` is True.
 
